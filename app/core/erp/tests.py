@@ -1,5 +1,4 @@
 from config.wsgi import *
-from core.erp.models import Type, Employee
 
 # SELECT
 
@@ -22,7 +21,7 @@ from core.erp.models import Type, Employee
 # t = Type.objects.get(pk=3)
 # t.delete()
 
-obj = Employee.objects.filter(type_id=1)
+# obj = Employee.objects.filter(type_id=1)
 
-for i in Type.objects.filter(name__icontains='pr'):
-    print(i.name)6
+# for i in Type.objects.filter(name__icontains='pr'):
+# print(i.name)
