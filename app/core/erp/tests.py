@@ -1,27 +1,17 @@
 from config.wsgi import *
+from core.erp.models import *
+import random
 
-# SELECT
+data = ['Leche y derivados', 'Carnes, pescados y huevos', 'Patatas, legumbres, frutos secos',
+        'Verduras y Hortalizas', 'Frutas', 'Cereales y derivados, azúcar y dulces',
+        'Grasas, aceite y mantequilla']
 
-# query = Type.objects.all()
-# print(query)
+letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't',
+           'u', 'v', 'w', 'x', 'y', 'z']
 
-# INSERT
-# t = Type()
-# t.id = 3
-# t.name = 'Gerente'
-# t.save()
-
-# UPDATE
-
-# t = Type.objects.get(id=1)
-# t.name = 'Propietario'
-# t.save()
-
-# DELETE
-# t = Type.objects.get(pk=3)
-# t.delete()
-
-# obj = Employee.objects.filter(type_id=1)
-
-# for i in Type.objects.filter(name__icontains='pr'):
-# print(i.name)
+for i in range(1, 6000):
+    name = ''.join(random.choices(letters, k=5))
+    while Category.objects.filter(name=name).exists():
+        name = ''.join(random.choices(letters, k=5))
+    Category(name=name).save()
+    print('Guardado registro {}'.format(i))
