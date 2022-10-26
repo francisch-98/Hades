@@ -1,4 +1,5 @@
 var tblProducts;
+var tblSearchProducts;
 var vents = {
     items: {
         cli: '',
@@ -7,6 +8,13 @@ var vents = {
         iva: 0.00,
         total: 0.00,
         products: []
+    },
+    get_ids: function () {
+        var ids = [];
+        $.each(this.items.products, function (key, value) {
+            ids.push(value.id);
+        });
+        return ids;
     },
     calculate_invoice: function () {
         var subtotal = 0.00;
@@ -37,13 +45,20 @@ var vents = {
             data: this.items.products,
             columns: [
                 {"data": "id"},
-                {"data": "name"},
-                {"data": "cat.name"},
+                {"data": "full_name"},
+                {"data": "stock"},
                 {"data": "pvp"},
                 {"data": "cant"},
                 {"data": "subtotal"},
             ],
             columnDefs: [
+                {
+                    targets: [-4],
+                    class: 'text-center',
+                    render: function (data, type, row) {
+                        return '<span class="badge badge-secondary">' + data + '</span>';
+                    }
+                },
                 {
                     targets: [0],
                     class: 'text-center',
@@ -57,7 +72,7 @@ var vents = {
                     class: 'text-center',
                     orderable: false,
                     render: function (data, type, row) {
-                        return '$' + parseFloat(data).toFixed(2);
+                        return 'Q' + parseFloat(data).toFixed(2);
                     }
                 },
                 {
@@ -73,7 +88,7 @@ var vents = {
                     class: 'text-center',
                     orderable: false,
                     render: function (data, type, row) {
-                        return '$' + parseFloat(data).toFixed(2);
+                        return 'Q' + parseFloat(data).toFixed(2);
                     }
                 },
             ],
@@ -81,7 +96,7 @@ var vents = {
 
                 $(row).find('input[name="cant"]').TouchSpin({
                     min: 1,
-                    max: 1000000000,
+                    max: data.stock,
                     step: 1
                 });
 
@@ -92,11 +107,16 @@ var vents = {
         });
         console.clear();
         console.log(this.items);
+        console.log(this.get_ids());
     },
 };
 
 function formatRepo(repo) {
     if (repo.loading) {
+        return repo.text;
+    }
+
+    if (!Number.isInteger(repo.id)) {
         return repo.text;
     }
 
@@ -109,8 +129,8 @@ function formatRepo(repo) {
         '<div class="col-lg-11 text-left shadow-sm">' +
         //'<br>' +
         '<p style="margin-bottom: 0;">' +
-        '<b>Nombre:</b> ' + repo.name + '<br>' +
-        '<b>Categoría:</b> ' + repo.cat.name + '<br>' +
+        '<b>Nombre:</b> ' + repo.full_name + '<br>' +
+        '<b>Stock:</b> ' + repo.stock + '<br>' +
         '<b>PVP:</b> <span class="badge badge-warning">$' + repo.pvp + '</span>' +
         '</p>' +
         '</div>' +
@@ -147,8 +167,55 @@ $(function () {
     })
         .val(0.12);
 
-    // search products
+    // search clients
 
+    $('select[name="cli"]').select2({
+        theme: "bootstrap4",
+        language: 'es',
+        allowClear: true,
+        ajax: {
+            delay: 250,
+            type: 'POST',
+            url: window.location.pathname,
+            data: function (params) {
+                var queryParameters = {
+                    term: params.term,
+                    action: 'search_clients'
+                }
+                return queryParameters;
+            },
+            processResults: function (data) {
+                return {
+                    results: data
+                };
+            },
+        },
+        placeholder: 'Ingrese una descripción',
+        minimumInputLength: 1,
+    });
+
+    $('.btnAddClient').on('click', function () {
+        $('#myModalClient').modal('show');
+    });
+
+    $('#myModalClient').on('hidden.bs.modal', function (e) {
+        $('#frmClient').trigger('reset');
+    })
+
+    $('#frmClient').on('submit', function (e) {
+        e.preventDefault();
+        var parameters = new FormData(this);
+        parameters.append('action', 'create_client');
+        submit_with_ajax(window.location.pathname, 'Notificación',
+            '¿Estas seguro de crear al siguiente cliente?', parameters, function (response) {
+                //console.log(response);
+                var newOption = new Option(response.full_name, response.id, false, true);
+                $('select[name="cli"]').append(newOption).trigger('change');
+                $('#myModalClient').modal('hide');
+            });
+    });
+
+    // search products
     /*$('input[name="search"]').autocomplete({
         source: function (request, response) {
             $.ajax({
@@ -208,15 +275,89 @@ $(function () {
             var tr = tblProducts.cell($(this).closest('td, li')).index();
             vents.items.products[tr.row].cant = cant;
             vents.calculate_invoice();
-            $('td:eq(5)', tblProducts.row(tr.row).node()).html('$' + vents.items.products[tr.row].subtotal.toFixed(2));
+            $('td:eq(5)', tblProducts.row(tr.row).node()).html('Q' + vents.items.products[tr.row].subtotal.toFixed(2));
         });
 
     $('.btnClearSearch').on('click', function () {
         $('input[name="search"]').val('').focus();
     });
 
+    $('.btnSearchProducts').on('click', function () {
+        tblSearchProducts = $('#tblSearchProducts').DataTable({
+            responsive: true,
+            autoWidth: false,
+            destroy: true,
+            deferRender: true,
+            ajax: {
+                url: window.location.pathname,
+                type: 'POST',
+                data: {
+                    'action': 'search_products',
+                    'ids': JSON.stringify(vents.get_ids()),
+                    'term': $('select[name="search"]').val()
+                },
+                dataSrc: ""
+            },
+            columns: [
+                {"data": "full_name"},
+                {"data": "image"},
+                {"data": "stock"},
+                {"data": "pvp"},
+                {"data": "id"},
+            ],
+            columnDefs: [
+                {
+                    targets: [-4],
+                    class: 'text-center',
+                    orderable: false,
+                    render: function (data, type, row) {
+                        return '<img src="' + data + '" class="img-fluid d-block mx-auto" style="width: 20px; height: 20px;">';
+                    }
+                },
+                {
+                    targets: [-3],
+                    class: 'text-center',
+                    render: function (data, type, row) {
+                        return '<span class="badge badge-secondary">' + data + '</span>';
+                    }
+                },
+                {
+                    targets: [-2],
+                    class: 'text-center',
+                    orderable: false,
+                    render: function (data, type, row) {
+                        return 'Q' + parseFloat(data).toFixed(2);
+                    }
+                },
+                {
+                    targets: [-1],
+                    class: 'text-center',
+                    orderable: false,
+                    render: function (data, type, row) {
+                        var buttons = '<a rel="add" class="btn btn-success btn-xs btn-flat"><i class="fas fa-plus"></i></a> ';
+                        return buttons;
+                    }
+                },
+            ],
+            initComplete: function (settings, json) {
+
+            }
+        });
+        $('#myModalSearchProducts').modal('show');
+    });
+
+    $('#tblSearchProducts tbody')
+        .on('click', 'a[rel="add"]', function () {
+            var tr = tblSearchProducts.cell($(this).closest('td, li')).index();
+            var product = tblSearchProducts.row(tr.row).data();
+            product.cant = 1;
+            product.subtotal = 0.00;
+            vents.add(product);
+            tblSearchProducts.row($(this).parents('tr')).remove().draw();
+        });
+
     // event submit
-    $('form').on('submit', function (e) {
+    $('#frmSale').on('submit', function (e) {
         e.preventDefault();
 
         if (vents.items.products.length === 0) {
@@ -251,7 +392,8 @@ $(function () {
             data: function (params) {
                 var queryParameters = {
                     term: params.term,
-                    action: 'search_products'
+                    action: 'search_autocomplete',
+                    ids: JSON.stringify(vents.get_ids())
                 }
                 return queryParameters;
             },
@@ -266,6 +408,9 @@ $(function () {
         templateResult: formatRepo,
     }).on('select2:select', function (e) {
         var data = e.params.data;
+        if (!Number.isInteger(data.id)) {
+            return false;
+        }
         data.cant = 1;
         data.subtotal = 0.00;
         vents.add(data);

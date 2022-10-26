@@ -1,5 +1,5 @@
+<link rel="shortcut icon" type="image/png" href="/static/img/png_16x16/012-tienda.png"/>
 {% extends 'login/base.html' %}
-
 {% block content %}
     <div class="login-box">
         <div class="login-logo">
@@ -27,6 +27,10 @@
                             </button>
                         </div>
                     </div>
+                    <p class="text-center mt-2" style="font-size: 13px;">
+                        Si deseas volver al login da un click <a
+                            href="{% url 'login' %}">aqui </a>
+                    </p>
                 </form>
             </div>
         </div>

@@ -1,5 +1,5 @@
 from datetime import datetime
-
+from django.db.models import FloatField
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
@@ -56,7 +56,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             year = datetime.now().year
             for m in range(1, 13):
                 total = Sale.objects.filter(date_joined__year=year, date_joined__month=m).aggregate(
-                    r=Coalesce(Sum('total'), 0)).get('r')
+                    r=Coalesce(Sum('total'), 0, output_field=FloatField())).get('r')
                 data.append(float(total))
         except:
             pass
@@ -70,7 +70,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             for p in Product.objects.all():
                 total = DetSale.objects.filter(sale__date_joined__year=year, sale__date_joined__month=month,
                                                prod_id=p.id).aggregate(
-                    r=Coalesce(Sum('subtotal'), 0)).get('r')
+                    r=Coalesce(Sum('subtotal'), 0, output_field=FloatField())).get('r')
                 if total > 0:
                     data.append({
                         'name': p.name,

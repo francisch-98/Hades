@@ -146,9 +146,9 @@ EMAIL_HOST = 'smtp.gmail.com'
 
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = 'francischavaramirez15@gmail.com'
+EMAIL_HOST_USER = 'hadestoregt@gmail.com'
 
-EMAIL_HOST_PASSWORD = 'iyzaamocqagcqnlv'
+EMAIL_HOST_PASSWORD = 'urlntyctfoioaviv'
 
 EMAIL_PORT = 587
 

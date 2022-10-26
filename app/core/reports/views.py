@@ -8,7 +8,7 @@ from core.erp.models import Sale
 from core.reports.forms import ReportForm
 
 from django.db.models.functions import Coalesce
-from django.db.models import Sum
+from django.db.models import Sum, FloatField
 
 
 class ReportSaleView(TemplateView):
@@ -39,9 +39,9 @@ class ReportSaleView(TemplateView):
                         format(s.total, '.2f'),
                     ])
 
-                subtotal = search.aggregate(r=Coalesce(Sum('subtotal'), 0)).get('r')
-                iva = search.aggregate(r=Coalesce(Sum('iva'), 0)).get('r')
-                total = search.aggregate(r=Coalesce(Sum('total'), 0)).get('r')
+                subtotal = search.aggregate(r=Coalesce(Sum('subtotal'), 0, output_field=FloatField())).get('r')
+                iva = search.aggregate(r=Coalesce(Sum('iva'), 0, output_field=FloatField())).get('r')
+                total = search.aggregate(r=Coalesce(Sum('total'), 0, output_field=FloatField())).get('r')
 
                 data.append([
                     '---',
